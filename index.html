@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ショートステイかがやき｜利用料金計算</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Meiryo", "Yu Gothic", sans-serif;
+    background: #f0f4f8;
+    color: #1a202c;
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; }
+
+  header {
+    background: linear-gradient(135deg, #2b6cb0, #4299e1);
+    color: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(66,153,225,0.3);
+  }
+  header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.05em; }
+  header p  { font-size: 0.8rem; opacity: 0.85; margin-top: 4px; }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+
+  .card-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #4a5568;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 14px;
+    background: #4299e1;
+    border-radius: 2px;
+  }
+
+  /* Radio button groups */
+  .radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Care level: two rows with labels */
+  .care-group { display: flex; flex-direction: column; gap: 10px; }
+  .care-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .care-row-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    min-width: 48px;
+    text-align: center;
+  }
+  .care-row-label.shien {
+    background: #e9f5fe;
+    color: #2b6cb0;
+    border: 1px solid #bee3f8;
+  }
+  .care-row-label.kaigo {
+    background: #fef3e9;
+    color: #c05621;
+    border: 1px solid #fbd38d;
+  }
+  .care-row .btn.kaigo-btn {
+    border-color: #fbd38d;
+    background: #fffaf0;
+    color: #744210;
+  }
+  .care-row input[type="radio"]:checked + .btn.kaigo-btn {
+    background: #c05621;
+    border-color: #c05621;
+    color: white;
+    box-shadow: 0 2px 6px rgba(192,86,33,0.35);
+  }
+
+  .radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    cursor: pointer;
+  }
+
+  .radio-group input[type="radio"] { display: none; }
+
+  .radio-group .btn {
+    padding: 7px 14px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #4a5568;
+    background: #f7fafc;
+    transition: all 0.15s;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+
+  .radio-group input[type="radio"]:checked + .btn {
+    background: #2b6cb0;
+    border-color: #2b6cb0;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(43,108,176,0.35);
+  }
+
+  .radio-group .btn:hover { border-color: #4299e1; color: #2b6cb0; }
+  .radio-group input[type="radio"]:checked + .btn:hover { color: white; }
+  .care-row input[type="radio"]:checked + .btn.kaigo-btn:hover { color: white; }
+
+  /* Meal checkboxes */
+  .meal-group { display: flex; gap: 10px; flex-wrap: wrap; }
+  .meal-group label { display: flex; align-items: center; gap: 0; cursor: pointer; }
+  .meal-group input[type="checkbox"] { display: none; }
+  .meal-group .meal-btn {
+    padding: 7px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #4a5568;
+    background: #f7fafc;
+    transition: all 0.15s;
+    font-family: inherit;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .meal-group .meal-btn .meal-price {
+    font-size: 0.72rem;
+    color: #a0aec0;
+    margin-left: 4px;
+  }
+  .meal-group input[type="checkbox"]:checked + .meal-btn {
+    background: #276749;
+    border-color: #276749;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(39,103,73,0.3);
+  }
+  .meal-group input[type="checkbox"]:checked + .meal-btn .meal-price { color: rgba(255,255,255,0.75); }
+  .meal-group .meal-btn:hover { border-color: #48bb78; color: #276749; }
+  .meal-group input[type="checkbox"]:checked + .meal-btn:hover { color: white; }
+
+  /* Stage description */
+  .stage-hint {
+    font-size: 0.75rem;
+    color: #718096;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #f7fafc;
+    border-radius: 6px;
+    line-height: 1.6;
+  }
+
+  /* Result area */
+  #result {
+    display: none;
+  }
+
+  .total-box {
+    background: linear-gradient(135deg, #2b6cb0, #4299e1);
+    color: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(66,153,225,0.3);
+  }
+  .total-row-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 12px;
+  }
+  .total-item { text-align: center; flex: 1; }
+  .total-divider {
+    width: 1px;
+    height: 56px;
+    background: rgba(255,255,255,0.35);
+    flex-shrink: 0;
+  }
+  .total-box .label { font-size: 0.8rem; opacity: 0.9; margin-bottom: 4px; }
+  .total-box .amount {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .total-box .unit { font-size: 1rem; font-weight: 400; opacity: 0.85; margin-left: 4px; }
+  @media (max-width: 400px) {
+    .total-box .amount { font-size: 1.55rem; }
+  }
+
+  /* Breakdown table */
+  .breakdown table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  .breakdown th {
+    text-align: left;
+    font-weight: 600;
+    color: #4a5568;
+    padding: 6px 8px;
+    background: #f7fafc;
+    font-size: 0.78rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .breakdown td {
+    padding: 8px 8px;
+    border-bottom: 1px solid #edf2f7;
+    color: #2d3748;
+  }
+  .breakdown td.amount { text-align: right; font-variant-numeric: tabular-nums; }
+  .breakdown tr.sub-item td { color: #718096; font-size: 0.82rem; padding-left: 20px; }
+  .breakdown tr.sub-item td.amount { color: #718096; }
+  .breakdown tr.section-header td {
+    background: #ebf8ff;
+    font-weight: 700;
+    color: #2c5282;
+    font-size: 0.82rem;
+    padding: 5px 8px;
+    border-bottom: none;
+  }
+  .breakdown tr.total-row td {
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-top: 2px solid #bee3f8;
+    border-bottom: 2px solid #bee3f8;
+    color: #2b6cb0;
+    background: #ebf8ff;
+    padding: 10px 8px;
+  }
+  .breakdown tr.grand-total td {
+    font-weight: 800;
+    font-size: 1rem;
+    border-top: 2px solid #2b6cb0;
+    color: #2b6cb0;
+    padding: 10px 8px;
+  }
+  .tag-capped {
+    display: inline-block;
+    background: #fed7d7;
+    color: #c53030;
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+    font-weight: 600;
+  }
+  .tag-full {
+    display: inline-block;
+    background: #c6f6d5;
+    color: #276749;
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+    font-weight: 600;
+  }
+
+  /* Monthly calc */
+  .monthly-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .monthly-section label { font-size: 0.875rem; color: #4a5568; white-space: nowrap; }
+  .monthly-section input[type="number"] {
+    width: 80px;
+    padding: 7px 10px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    color: #2d3748;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .monthly-section input[type="number"]:focus { border-color: #4299e1; }
+  .monthly-total {
+    margin-left: auto;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2b6cb0;
+    white-space: nowrap;
+  }
+  .monthly-total span { font-size: 0.8rem; font-weight: 400; color: #718096; margin-left: 2px; }
+
+  /* Not selected state */
+  .not-selected {
+    text-align: center;
+    padding: 32px;
+    color: #a0aec0;
+    font-size: 0.875rem;
+  }
+
+  .error-notice {
+    background: #fff5f5;
+    border: 1px solid #fc8181;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    color: #c53030;
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 480px) {
+    .total-box .amount { font-size: 1.9rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>ショートステイかがやき｜利用料金計算</h1>
+    <p>3項目を選択すると1日の利用料金と内訳を自動で算出します</p>
+  </header>
+
+  <!-- 入力セクション -->
+  <div class="card">
+    <div class="card-title">要介護認定区分</div>
+    <div class="care-group">
+      <div class="care-row radio-group">
+        <span class="care-row-label shien">要支援</span>
+        <label><input type="radio" name="care" value="要支援1"><span class="btn">要支援1</span></label>
+        <label><input type="radio" name="care" value="要支援2"><span class="btn">要支援2</span></label>
+      </div>
+      <div class="care-row radio-group">
+        <span class="care-row-label kaigo">要介護</span>
+        <label><input type="radio" name="care" value="要介護1"><span class="btn kaigo-btn">要介護1</span></label>
+        <label><input type="radio" name="care" value="要介護2"><span class="btn kaigo-btn">要介護2</span></label>
+        <label><input type="radio" name="care" value="要介護3"><span class="btn kaigo-btn">要介護3</span></label>
+        <label><input type="radio" name="care" value="要介護4"><span class="btn kaigo-btn">要介護4</span></label>
+        <label><input type="radio" name="care" value="要介護5"><span class="btn kaigo-btn">要介護5</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">自己負担割合</div>
+    <div class="radio-group" id="grp-ratio">
+      <label><input type="radio" name="ratio" value="1"><span class="btn">1割負担</span></label>
+      <label><input type="radio" name="ratio" value="2"><span class="btn">2割負担</span></label>
+      <label><input type="radio" name="ratio" value="3"><span class="btn">3割負担</span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">負担限度額認定区分</div>
+    <div class="radio-group" id="grp-stage">
+      <label><input type="radio" name="stage" value="第1段階"><span class="btn">第1段階</span></label>
+      <label><input type="radio" name="stage" value="第2段階"><span class="btn">第2段階</span></label>
+      <label><input type="radio" name="stage" value="第3段階①"><span class="btn">第3段階①</span></label>
+      <label><input type="radio" name="stage" value="第3段階②"><span class="btn">第3段階②</span></label>
+      <label><input type="radio" name="stage" value="第4段階"><span class="btn">第4段階</span></label>
+    </div>
+    <div class="stage-hint" id="stage-hint">段階を選択してください</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">食事（提供する食事を選択）</div>
+    <div class="meal-group">
+      <label><input type="checkbox" id="meal-k" checked><span class="meal-btn">朝食</span></label>
+      <label><input type="checkbox" id="meal-l" checked><span class="meal-btn">昼食</span></label>
+      <label><input type="checkbox" id="meal-m" checked><span class="meal-btn">夕食</span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">利用日数</div>
+    <div class="monthly-section">
+      <input type="number" id="days-input" min="1" max="31" value="7" />
+      <label>日</label>
+    </div>
+  </div>
+
+  <!-- 結果セクション -->
+  <div id="result">
+
+    <div class="total-box">
+      <div class="total-row-flex">
+        <div class="total-item">
+          <div class="label">1日の利用料金</div>
+          <div class="amount" id="total-amount">—</div>
+        </div>
+        <div class="total-divider"></div>
+        <div class="total-item">
+          <div class="label">月間合計（<span id="days-label">—</span>日間）</div>
+          <div class="amount" id="monthly-total">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card breakdown">
+      <div class="card-title">料金内訳</div>
+      <table>
+        <colgroup>
+          <col style="width:60%">
+          <col style="width:40%">
+        </colgroup>
+        <tbody id="breakdown-body"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div class="card" id="placeholder">
+    <div class="not-selected">上記の3項目をすべて選択すると料金が表示されます</div>
+  </div>
+
+</div>
+
+<script>
+// ===== 料金マスタデータ =====
+const CARE_FEES = {
+  '要支援1': { D: 529, E: 22, F: 0 },
+  '要支援2': { D: 666, E: 22, F: 0 },
+  '要介護1': { D: 704, E: 22, F: 18 },
+  '要介護2': { D: 772, E: 22, F: 18 },
+  '要介護3': { D: 847, E: 22, F: 18 },
+  '要介護4': { D: 918, E: 22, F: 18 },
+  '要介護5': { D: 987, E: 22, F: 18 },
+};
+
+const STAGE_FEES = {
+  '第1段階': { H: 880,  N: 300,  label: '市区町村民税世帯非課税かつ老齢福祉年金受給者、または生活保護受給者' },
+  '第2段階': { H: 880,  N: 600,  label: '市区町村民税世帯非課税で、年間収入80万円以下等の低所得者' },
+  '第3段階①':{ H: 1370, N: 1000, label: '市区町村民税世帯非課税で、年間収入80万円超〜120万円以下' },
+  '第3段階②':{ H: 1370, N: 1300, label: '市区町村民税世帯非課税で、年間収入120万円超' },
+  '第4段階': { H: 2940, N: 1750, label: '市区町村民税課税世帯（一般）' },
+};
+
+const FOOD = { K: 430, L: 660, M: 660 }; // 朝食・昼食・夕食
+const I_FEE = 200; // 日常生活費（固定）
+
+// ===== 段階の説明更新 =====
+const stageHints = {
+  '第1段階': '老齢福祉年金受給者、生活保護受給者など',
+  '第2段階': '世帯非課税・年間収入80万円以下など低所得者',
+  '第3段階①': '世帯非課税・年間収入80万円超〜120万円以下',
+  '第3段階②': '世帯非課税・年間収入120万円超',
+  '第4段階': '市区町村民税課税世帯（一般）／認定証なしの場合もここ',
+};
+
+// ===== UI イベント =====
+document.querySelectorAll('input[type="radio"]').forEach(r => r.addEventListener('change', calculate));
+document.querySelectorAll('input[type="checkbox"]').forEach(c => c.addEventListener('change', calculate));
+document.getElementById('days-input').addEventListener('input', updateMonthly);
+
+function getVal(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? el.value : null;
+}
+
+function fmt(n) {
+  return n.toLocaleString('ja-JP') + '円';
+}
+
+function row(label, amount, cls = '') {
+  return `<tr class="${cls}"><td>${label}</td><td class="amount">${typeof amount === 'number' ? fmt(amount) : amount}</td></tr>`;
+}
+
+function calculate() {
+  const care  = getVal('care');
+  const ratio = getVal('ratio');
+  const stage = getVal('stage');
+
+  // 段階ヒント更新
+  if (stage) {
+    document.getElementById('stage-hint').textContent = stageHints[stage] || '';
+  } else {
+    document.getElementById('stage-hint').textContent = '段階を選択してください';
+  }
+
+  if (!care || !ratio || !stage) {
+    document.getElementById('result').style.display = 'none';
+    document.getElementById('placeholder').style.display = 'block';
+    return;
+  }
+
+  const r   = parseInt(ratio);   // 1, 2, 3
+  const cf  = CARE_FEES[care];
+  const sf  = STAGE_FEES[stage];
+
+  // サービス費計算（負担割合を乗算）
+  const D = cf.D * r;
+  const E = cf.E * r;
+  const F = cf.F * r;
+  const G = D + E + F;  // サービス費合計
+
+  // 生活系
+  const H = sf.H;       // 居住費
+  const I = I_FEE;      // 日常生活費
+  const J = G + H + I;  // 生活系合計
+
+  // 食費（選択された食事のみ）
+  const useK = document.getElementById('meal-k').checked;
+  const useL = document.getElementById('meal-l').checked;
+  const useM = document.getElementById('meal-m').checked;
+  const K = useK ? FOOD.K : 0;
+  const L = useL ? FOOD.L : 0;
+  const M = useM ? FOOD.M : 0;
+  const foodRaw = K + L + M;
+  const N = sf.N;       // 食費上限
+  const foodApplied = Math.min(foodRaw, N);
+  const isCapped = foodRaw > N;
+
+  // 1日合計
+  const totalDay = J + foodApplied;
+
+  // ===== 内訳テーブル生成 =====
+  let rows = '';
+
+  rows += row('', '<b>項目</b>', 'section-header');
+
+  // --- サービス費 ---
+  rows += `<tr class="section-header"><td colspan="2">▍サービス費（${ratio}割負担）</td></tr>`;
+  rows += row('　サービス費', D, 'sub-item');
+  rows += row('　サービス提供体制加算イ', E, 'sub-item');
+  if (cf.F > 0) {
+    rows += row('　夜勤職員配置加算Ⅱ', F, 'sub-item');
+  } else {
+    rows += row('　夜勤職員配置加算Ⅱ', '－（対象外）', 'sub-item');
+  }
+  rows += row('サービス費　小計', G, 'total-row');
+
+  // --- 生活費 ---
+  rows += `<tr class="section-header"><td colspan="2">▍生活費（${stage}）</td></tr>`;
+  rows += row('　居住費', H, 'sub-item');
+  rows += row('　日常生活費', I, 'sub-item');
+
+  // --- 生活系合計 ---
+  rows += row('生活系　合計（J）', J, 'total-row');
+
+  // --- 食費 ---
+  rows += `<tr class="section-header"><td colspan="2">▍食費</td></tr>`;
+  if (foodRaw === 0) {
+    rows += row('　食事なし', '－', 'sub-item');
+    rows += row('食費　合計', 0, 'total-row');
+  } else if (isCapped) {
+    // 上限適用：内訳非表示
+    rows += `<tr class="sub-item"><td>　食費小計（${[useK?'朝':null,useL?'昼':null,useM?'夕':null].filter(Boolean).join('・')}）</td><td class="amount">${fmt(foodRaw)}</td></tr>`;
+    rows += `<tr class="total-row"><td>食費（上限適用 <span class="tag-capped">上限 ${fmt(N)}</span>）</td><td class="amount">${fmt(foodApplied)}</td></tr>`;
+  } else {
+    // 上限以内：内訳表示
+    if (useK) rows += row('　朝食', FOOD.K, 'sub-item');
+    if (useL) rows += row('　昼食', FOOD.L, 'sub-item');
+    if (useM) rows += row('　夕食', FOOD.M, 'sub-item');
+    rows += `<tr class="total-row"><td>食費（上限内 <span class="tag-full">余裕 ${fmt(N - foodRaw)}円</span>）</td><td class="amount">${fmt(foodApplied)}</td></tr>`;
+  }
+
+  // --- 1日合計 ---
+  rows += `<tr class="grand-total"><td>1日の合計（J + 食費）</td><td class="amount">${fmt(totalDay)}</td></tr>`;
+
+  document.getElementById('breakdown-body').innerHTML = rows;
+  document.getElementById('total-amount').innerHTML = `${totalDay.toLocaleString('ja-JP')}<span class="unit">円</span>`;
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('placeholder').style.display = 'none';
+
+  updateMonthly(totalDay);
+}
+
+function updateMonthly(totalDay) {
+  const days = parseInt(document.getElementById('days-input').value) || 0;
+  let base = totalDay;
+  if (typeof totalDay !== 'number') {
+    const txt = (document.getElementById('total-amount').textContent || '').replace(/[^0-9]/g, '');
+    base = parseInt(txt) || 0;
+  }
+  document.getElementById('days-label').textContent = days || '—';
+  if (days > 0 && base > 0) {
+    document.getElementById('monthly-total').innerHTML =
+      `${(base * days).toLocaleString('ja-JP')}<span class="unit">円</span>`;
+  } else {
+    document.getElementById('monthly-total').textContent = '—';
+  }
+}
+</script>
+</body>
+</html>
